@@ -4,15 +4,32 @@ import './index.css';
 import App from './app';
 import {mutators} from 'replicache-quickstarts-shared';
 import {HTTPRequestInfo, Replicache, PullerResult} from 'replicache';
-import {createSpace, spaceExists} from './space';
+import axios from "axios";
+// import {createSpace, spaceExists} from './space';
 
 async function init() {
   const {pathname} = window.location;
 
-  // if (pathname === '/' || pathname === '') {
+  if (pathname === '/' || pathname === '') {
+    const options = await axios.get("https://replicache-proxy.fly.dev/api/machines")
+    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+        <React.StrictMode>
+          <div>
+            <h1>Fly.io Replicache demo</h1>
+            <p>Choose a todo list to connect to. Each list is running on its own backend running on a Fly.io Machine.</p>
+            <p>When you choose a list, your browser connects to a proxy that uses the Fly.io <a href="https://fly.io/docs/reference/fly-replay/">fly-replay</a> header to seamlessly connect your browser to the backend running the list you chose.</p>
+            <ul>
+              {options.data.map((machine: any) => {
+                return <li key={machine}> <a href={`/list/${machine}`}>{machine}</a></li>
+              })}
+            </ul>
+          </div>
+        </React.StrictMode>,
+    );
+    return
   //   window.location.href = '/list/' + (await createSpace());
   //   return;
-  // }
+  }
 
   // URL layout is "/list/<listid>"
   const paths = pathname.split('/');

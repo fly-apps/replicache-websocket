@@ -5,6 +5,8 @@ import { handleRequest } from "./endpoints/handle-request.js";
 import { handlePoke } from "./endpoints/handle-poke.js";
 import expressWs from 'express-ws';
 import {getWsBackend} from "./backend/ws";
+import axios from "axios";
+import cors from "cors";
 
 export interface ReplicacheServerOptions {
   mutators: MutatorDefs;
@@ -48,12 +50,23 @@ export class ReplicacheExpressServer {
     };
 
     if (process.env.REPLICACHE_EXPRESS_IS_PROXY) {
+      console.log("setting up proxy stuff")
       const app = express()
       app.use(
           express.urlencoded({extended: true}),
           express.json(),
           errorHandler
       );
+      app.use(cors());
+      app.get('/api/machines', async (_req, res, _next) => {
+        const machines = await axios.get("http://_api.internal:4280/v1/apps/replicache-backend/machines", {headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Authorization": `Bearer ${process.env.FLY_API_TOKEN}`
+        }})
+        res.send(machines.data.map((machine: { id: any; }) => {
+          return machine.id
+        }))
+      })
       return app
     }
 
@@ -67,7 +80,6 @@ export class ReplicacheExpressServer {
 
     if (!process.env.REPLICACHE_EXPRESS_IS_PROXY) {
       app.ws(`/api/replicache/websocket/:spaceID`, (ws, req, next) => {
-        console.log("trying to handle websocket!!")
         const wsBackend = getWsBackend(mutators)
         ws.send("{\"data\":\"hello\"}")
         wsBackend.addClient(req.params.spaceID, ws)
