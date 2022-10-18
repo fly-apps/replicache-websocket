@@ -2,6 +2,7 @@ import WebSocket from "ws";
 import {pull} from "./pull";
 import {push} from "./push";
 import type {MutatorDefs} from "replicache";
+import {createSpace, spaceExists} from "./index";
 
 export function getWsBackend<M extends MutatorDefs>(mutators: M) {
     const global = globalThis as unknown as {
@@ -65,6 +66,7 @@ export class WsBackend<M extends MutatorDefs>{
             clients.add(wrapped)
         }
         client.on("message", async (rawData) => {
+            if (!await spaceExists(spaceID)) await createSpace(spaceID)
             const data = JSON.parse(rawData.toString())
             if (!wrapped.clientID) wrapped.clientID = data.clientID
             console.log(data)

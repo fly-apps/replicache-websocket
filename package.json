@@ -13,9 +13,9 @@
     "index.cjs",
     ".gitignore",
     "client/*",
+    "replicache-express",
     "server",
-    "shared",
-    "replicache-express"
+    "shared"
   ],
   "scripts": {
     "format": "npm run format --ws",
@@ -35,8 +35,8 @@
   },
   "workspaces": [
     "client/*",
+    "replicache-express",
     "server",
-    "shared",
-    "replicache-express"
+    "shared"
   ]
 }

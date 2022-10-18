@@ -1,0 +1,19 @@
+FROM node:16 as builder
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+ENV VITE_REPLICACHE_LICENSE_KEY=l0673dbaba65441ebba9ce666e12d66e6
+
+RUN npm install
+RUN npm run build
+
+FROM nginx
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d
+
+COPY --from=builder /usr/src/app/client/react/dist /usr/share/nginx/html
+
+EXPOSE 80

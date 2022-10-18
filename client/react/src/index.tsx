@@ -9,22 +9,22 @@ import {createSpace, spaceExists} from './space';
 async function init() {
   const {pathname} = window.location;
 
-  if (pathname === '/' || pathname === '') {
-    window.location.href = '/list/' + (await createSpace());
-    return;
-  }
+  // if (pathname === '/' || pathname === '') {
+  //   window.location.href = '/list/' + (await createSpace());
+  //   return;
+  // }
 
   // URL layout is "/list/<listid>"
   const paths = pathname.split('/');
-  const [, listDir, listID] = paths;
-  if (
-    listDir !== 'list' ||
-    listID === undefined ||
-    !(await spaceExists(listID))
-  ) {
-    window.location.href = '/';
-    return;
-  }
+  const [, , listID] = paths;
+  // if (
+  //   listDir !== 'list' ||
+  //   listID === undefined ||
+  //   !(await spaceExists(listID))
+  // ) {
+  //   window.location.href = '/';
+  //   return;
+  // }
 
   // See https://doc.replicache.dev/licensing for how to get a license key.
   const licenseKey = import.meta.env.VITE_REPLICACHE_LICENSE_KEY;
@@ -35,7 +35,7 @@ async function init() {
   let patch: any[] = []
   let lastMutationID = 0
   let cookie: number | undefined = undefined
-  const socket = new WebSocket(`ws://localhost:8080/api/replicache/websocket/${listID}`)
+  const socket = new WebSocket(`wss://replicache-proxy.fly.dev/api/replicache/websocket/${listID}`)
 
   const r = new Replicache({
     licenseKey,

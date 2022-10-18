@@ -19,14 +19,16 @@ const default_dist = path.join(__dirname, '../dist/dist');
 
 if (process.env.NODE_ENV === 'production') {
   const r = new ReplicacheExpressServer(options);
-  r.app.use(express.static(default_dist));
+  if (!process.env.REPLICACHE_EXPRESS_IS_PROXY) {
+    r.app.use(express.static(default_dist));
+    r.app.use('*', (_req, res) => {
+      const index = path.join(default_dist, 'index.html');
+      const html = fs.readFileSync(index, 'utf8');
+      res.status(200).set({'Content-Type': 'text/html'}).end(html);
+    });
+  }
   r.app.get('/health', (_req, res) => {
     res.send('ok');
-  });
-  r.app.use('*', (_req, res) => {
-    const index = path.join(default_dist, 'index.html');
-    const html = fs.readFileSync(index, 'utf8');
-    res.status(200).set({'Content-Type': 'text/html'}).end(html);
   });
   r.start(() => {
     console.log(
