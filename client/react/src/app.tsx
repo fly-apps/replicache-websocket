@@ -43,15 +43,18 @@ const App = ({rep}: {rep: Replicache<M>}) => {
   // Render app.
 
   return (
-    <div className="todoapp">
-      <Header onNewItem={handleNewItem} />
-      <MainSection
-        todos={todos}
-        onUpdateTodo={handleUpdateTodo}
-        onDeleteTodos={handleDeleteTodos}
-        onCompleteTodos={handleCompleteTodos}
-      />
-    </div>
+      <>
+          <h2>This list is stored in memory on a Fly.io machine that is shared between everyone at this specific URL.</h2>
+          <h2>So you know, please don't actually use this as your todo list and also please be civil.</h2>
+          <div className="todoapp">
+              <Header onNewItem={handleNewItem}/>
+              <MainSection
+                  todos={todos}
+                  onUpdateTodo={handleUpdateTodo}
+                  onDeleteTodos={handleDeleteTodos}
+                  onCompleteTodos={handleCompleteTodos}/>
+          </div>
+      </>
   );
 };
 

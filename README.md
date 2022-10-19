@@ -1,75 +1,48 @@
-![Replicache logo](https://uploads-ssl.webflow.com/623a2f46e064937599256c2d/6269e72c61073c3d561a5015_Lockup%20v2.svg)
+# Setup
+## Create your fly apps
+```shell
+# Create an app for the frontend
+$ flyctl apps create my-example-frontend-app
+$ flyctl ips allocate-v4 -a my-example-frontend-app
+$ flyctl ips allocate-v6 -a my-example-frontend-app
 
-# replicache-quickstarts
+# Create an app for the proxy
+$ flyctl apps create my-example-proxy-app
+$ flyctl ips allocate-v4 -a my-example-proxy-app
+$ flyctl ips allocate-v6 -a my-example-proxy-app
 
-This repository contains quickstarts and sample code for [Replicache](https://replicache.dev/). There are multiple option to run various frontend framework with a common express server backend. The backend utilizes the [replicache-express](https://github.com/rocicorp/replicache-express) library which implements the `push`, `pull`, `poke`, `createSpace`, and `spaceExists` handlers required for Replicache sync protocol. This library intends to help developers easily experiment with various frontend frameworks integrated with Replicache.
+# Create an app for the backend
+$ flyctl apps create my-example-backend-app
+$ flyctl ips allocate-v4 -a my-example-backend-app
+$ flyctl ips allocate-v6 -a my-example-backend-app
+```
+## Set secrets
+```shell
+# Get your fly token
+$ flyctl auth token
+$ flyctl secrets set -a my-example-proxy-app FLY_API_TOKEN=yourtoken BACKEND_APP_NAME=my-example-backend-app
+```
+## Edit files
+Edit `./client/react/src/index.tsx:15` and replace `replicache-proxy.fly.dev` with your proxy app name.
+## Build the docker images
+```shell
+$ docker buildx build --platform linux/amd64 --push -t registry.fly.io/my-example-frontend-app:latest -f Dockerfile.frontend .
+$ docker buildx build --platform linux/amd64 --push -t registry.fly.io/my-example-proxy-app:latest -f Dockerfile.proxy.
+$ docker buildx build --platform linux/amd64 --push -t registry.fly.io/my-example-backend-app:latest -f Dockerfile.backend.
+```
+## Run your machines
+```shell
+# Create a few backend machines
+$ flyctl m run -a my-example-backend-app -n backend-1 --memory 512 --cpus 2 -p 443:8080/tcp:http:tls registry.fly.io/my-example-backend-app:latest
+$ flyctl m run -a my-example-backend-app -n backend-2 --memory 512 --cpus 2 -p 443:8080/tcp:http:tls registry.fly.io/my-example-backend-app:latest
+$ flyctl m run -a my-example-backend-app -n backend-3 --memory 512 --cpus 2 -p 443:8080/tcp:http:tls registry.fly.io/my-example-backend-app:latest
 
-## 1. Setup
+# Create your proxy machine
+$ flyctl m run -a my-example-proxy-app --memory 512 --cpus 2 registry.fly.io/my-example-proxy-app:latest 
 
-#### Get your Replicache License Key
-
-```bash
-$ npx replicache get-license
+# Create your frontend
+$ flyctl m run -a my-example-frontend-app -n frontend-1 -p 443:80/tcp:http:tls registry.fly.io/my-example-frontend-app:latest  
 ```
 
-#### Set your `VITE_REPLICACHE_LICENSE_KEY` environment variable
-
-```bash
-$ export VITE_REPLICACHE_LICENSE_KEY="<your license key>"
-```
-
-#### Install and Build
-
-```bash
-$ npm install; npm run build;
-```
-
-## 2. Decide on a framework and start frontend and backend watcher
-
-#### [react](/react)
-
-```bash
-$ cd ./client/react && npm run watch
-```
-
-Provides an example integrating replicache with react in a simple todo application.
-
-#### [ts-web-component](/ts-web-component)
-
-Provides an example integrating replicache with vanilla typescript in a simple todo application. This library utilizes W3C standard web-components. It does not have any requirements to run any external library frameworks.
-
-```bash
-$ cd ./client/ts-web-component && npm run watch
-```
-
-## Production mode
-
-The server can serve the output of the various frameworks and be run as a static server to simulate a production environment.
-
-```bash
-$ cd ./client/<framework> && npm run prod
-```
-
-## Deploying to Render
-
-A render blueprint example is provided to deploy the application.
-
-```bash
-$ cp render.yaml.example render.yaml
-```
-
-Open the YAML file and modify the following lines to the appropriate framework
-
-```
-name: replicache-quickstarts-todo-<framework> # change e.g. (replicache-quickstarts-todo-<framework>)
-startCommand: "cd ./client/<framework> && npm run prod" 
-```
-
-Commit the changes and follow the direction on [Deploying to Render](https://doc.replicache.dev/deploy-render)
-
-## Upcoming Frameworks
-
-- React Native
-- Svelte
-- SolidJS
-- Vue
+## Check it out
+Check it all out at `my-example-frontend-app.fly.dev`

@@ -60,7 +60,3 @@ resource "fly_ip" "backendIPV6" {
   type       = "v6"
   depends_on = [fly_app.backend_app]
 }
-
-#resource "fly_machine" "backendMachine1" {
-#
-#}

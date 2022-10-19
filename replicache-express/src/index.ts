@@ -59,7 +59,7 @@ export class ReplicacheExpressServer {
       );
       app.use(cors());
       app.get('/api/machines', async (_req, res, _next) => {
-        const machines = await axios.get("http://_api.internal:4280/v1/apps/replicache-backend/machines", {headers: {
+        const machines = await axios.get(`http://_api.internal:4280/v1/apps/${process.env.BACKEND_APP_NAME ? process.env.BACKEND_APP_NAME : "replicache-backend"}/machines`, {headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
           "Authorization": `Bearer ${process.env.FLY_API_TOKEN}`
         }})

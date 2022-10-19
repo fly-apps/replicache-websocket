@@ -11,6 +11,7 @@ async function init() {
   const {pathname} = window.location;
 
   if (pathname === '/' || pathname === '') {
+    //EDIT ME
     const options = await axios.get("https://replicache-proxy.fly.dev/api/machines")
     ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <React.StrictMode>
