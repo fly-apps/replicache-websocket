@@ -3,9 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './app';
 import {mutators} from 'replicache-quickstarts-shared';
-import {HTTPRequestInfo, Replicache, PullerResult} from 'replicache';
+import {HTTPRequestInfo, Replicache, PullerResult, Poke, PullResponse } from 'replicache';
 import axios from "axios";
-// import {createSpace, spaceExists} from './space';
 
 async function init() {
   const {pathname} = window.location;
@@ -28,21 +27,10 @@ async function init() {
         </React.StrictMode>,
     );
     return
-  //   window.location.href = '/list/' + (await createSpace());
-  //   return;
   }
 
-  // URL layout is "/list/<listid>"
   const paths = pathname.split('/');
   const [, , listID] = paths;
-  // if (
-  //   listDir !== 'list' ||
-  //   listID === undefined ||
-  //   !(await spaceExists(listID))
-  // ) {
-  //   window.location.href = '/';
-  //   return;
-  // }
 
   // See https://doc.replicache.dev/licensing for how to get a license key.
   const licenseKey = import.meta.env.VITE_REPLICACHE_LICENSE_KEY;
@@ -50,10 +38,9 @@ async function init() {
     throw new Error('Missing VITE_REPLICACHE_LICENSE_KEY');
   }
 
-  let patch: any[] = []
-  let lastMutationID = 0
-  let cookie: number | undefined = undefined
   const socket = new WebSocket(`wss://replicache-proxy.fly.dev/api/replicache/websocket/${listID}`)
+
+  let prevCookie = 0;
 
   const r = new Replicache({
     licenseKey,
@@ -65,19 +52,15 @@ async function init() {
       socket.send(JSON.stringify(await req.json()))
       return res
     },
-    puller: async () => {
+    puller: async req => {
+      const decodedReq = await req.json()
       const res: PullerResult = {
         httpRequestInfo: {
           httpStatusCode: 200,
           errorMessage: ""
         },
-        response: {
-          cookie,
-          patch,
-          lastMutationID
-        }
       }
-      patch = []
+      prevCookie = decodedReq.cookie
       return res
     },
     name: listID,
@@ -85,20 +68,30 @@ async function init() {
   });
 
   socket.onopen = async () => {
-    //TODO: if there was a way to divine what the current client thinks the cookie is, we could
-    //      send it here and prevent a whole resync on load. Unfortunately I can't find a way to get it
-    //      without initiating a pull.
-    socket.send(JSON.stringify({messageType: "hello", clientID: await r.clientID}))
+    await r.pull()
+    socket.send(JSON.stringify({messageType: "hello", clientID: await r.clientID, cookie: prevCookie}))
   }
 
-  socket.addEventListener("message", (event) => {
+  socket.addEventListener("message", async (event) => {
     const data = JSON.parse(event.data)
     if (data.message === "poke") {
       if (data.patch.length > 0) {
-        patch = [...patch, ...data.patch]
-        lastMutationID = data.lastMutationID
-        cookie = data.cookie
-        r.pull()
+        const {patch, lastMutationID, cookie} = data
+
+        const res: PullResponse = {
+          cookie,
+          patch,
+          lastMutationID
+        }
+
+        const poke: Poke = {
+          baseCookie: prevCookie,
+          pullResponse: res,
+        }
+
+        prevCookie = cookie
+
+        await r.poke(poke)
       }
     }
   })
